@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#0b1520"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="ED Care Pro"/>
+<meta name="description" content="ED Critical Care Protocols — RSI, ACLS, PALS quick reference with dose calculator, CPR timer, and Broselow estimator."/>
+<title>ED Critical Care Pro</title>
+
+<!-- PWA Manifest inline via JS blob -->
+<link id="manifest-link" rel="manifest"/>
+
+<!-- Icons (inline SVG as data URIs for offline) -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230b1520'/%3E%3Ctext x='256' y='340' font-size='280' text-anchor='middle'%3E❤️%3C/text%3E%3Ctext x='256' y='470' font-family='monospace' font-weight='900' font-size='72' fill='%23f87171' text-anchor='middle'%3EED PRO%3C/text%3E%3C/svg%3E"/>
+
+<style>
+/* ── RESET & BASE ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:16px;-webkit-text-size-adjust:100%}
+body{font-family:'Barlow','Segoe UI',system-ui,sans-serif;background:#0b1520;color:#e2eaf2;min-height:100vh;min-height:100dvh;overscroll-behavior:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input{font-family:inherit}
+/* Custom scrollbar */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#0b1520}
+::-webkit-scrollbar-thumb{background:#1e3a5f;border-radius:2px}
+
+/* ── LAYOUT ── */
+#app{display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+#header{background:linear-gradient(135deg,#0f1f30,#162535);border-bottom:2px solid #1e3a5f;padding:12px 16px 10px;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;gap:8px}
+#main{flex:1;padding:18px 14px 100px;max-width:960px;margin:0 auto;width:100%}
+#bottomnav{position:fixed;bottom:0;left:0;right:0;background:#0f1f30;border-top:1px solid #1e3a5f;display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+
+/* ── HEADER ── */
+.logo{font-family:'Courier New',monospace;font-weight:900;font-size:1.15rem;letter-spacing:3px;color:#fff;line-height:1}
+.logo span{color:#f87171}
+.logo-sub{font-size:0.6rem;letter-spacing:3px;color:#4a7a9a;margin-top:2px;text-transform:uppercase}
+.install-btn{background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.4);color:#f87171;padding:6px 12px;border-radius:8px;font-size:0.72rem;font-weight:700;letter-spacing:1px;display:none;align-items:center;gap:6px}
+.install-btn.visible{display:flex}
+
+/* ── BOTTOM NAV ── */
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 8px;gap:3px;color:#3a5a7a;transition:color .2s;font-size:0.58rem;letter-spacing:1px;text-transform:uppercase;font-weight:700;border-top:2px solid transparent;position:relative}
+.nav-item.active{border-top-color:var(--c)}
+.nav-item .icon{font-size:1.2rem;line-height:1}
+.nav-item.active{color:var(--c)}
+
+/* ── SECTION HEADERS ── */
+.sec-title{font-family:'Courier New',monospace;font-size:1rem;font-weight:900;letter-spacing:3px;display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.sec-title::after{content:'';flex:1;height:1px;background:currentColor;opacity:.2}
+.sec-sub{font-size:0.68rem;color:#4a6a8a;letter-spacing:2px;margin-bottom:18px;text-transform:uppercase}
+
+/* ── CARDS ── */
+.card{background:#121e2d;border:1px solid #1e3a5f;border-radius:12px;margin-bottom:10px;overflow:hidden}
+.step-head{display:flex;align-items:center;gap:10px;padding:11px 14px}
+.step-num{font-family:'Courier New',monospace;font-size:1.4rem;font-weight:900;line-height:1;min-width:28px}
+.step-title{font-weight:700;font-size:0.9rem;letter-spacing:.5px}
+.step-body{padding:10px 14px;font-size:0.82rem;line-height:1.7;color:#8aaccc}
+.arrow{margin-left:auto;font-size:.75rem;opacity:.3}
+
+/* ── DRUG CARDS ── */
+.drug-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.drug-card{background:#121e2d;border-radius:10px;padding:13px 15px;border-left:4px solid var(--c);border-top:1px solid rgba(255,255,255,.05);border-right:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05);transition:opacity .2s;cursor:pointer}
+.drug-name{font-size:.95rem;font-weight:800;color:var(--c);letter-spacing:.3px;margin-bottom:1px}
+.drug-class{font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:#4a6a8a;margin-bottom:8px}
+.dose-badge{display:inline-block;background:rgba(255,255,255,.06);border:1px solid;border-color:var(--c);border-opacity:.3;border-radius:5px;padding:4px 10px;font-family:'Courier New',monospace;font-size:.85rem;font-weight:700;color:var(--c);margin-bottom:8px}
+.drug-row{display:flex;gap:6px;margin-bottom:3px;align-items:baseline}
+.drug-label{font-size:.62rem;letter-spacing:1px;text-transform:uppercase;color:#3a5a7a;min-width:66px;flex-shrink:0;font-weight:700}
+.drug-value{font-size:.79rem;color:#8aaccc;line-height:1.45}
+.ci-tag{display:inline-block;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);color:#f87171;border-radius:4px;padding:2px 7px;font-size:.66rem;margin-top:5px}
+.warn-tag{display:inline-block;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);color:#fbbf24;border-radius:4px;padding:2px 7px;font-size:.66px;margin-top:4px;line-height:1.5;font-size:.66rem}
+.expand-hint{text-align:right;font-size:.62rem;opacity:.4;margin-top:6px;color:var(--c)}
+.ci-section{border-top:1px solid rgba(255,255,255,.06);margin-top:10px;padding-top:10px}
+.ci-label{font-size:.62rem;letter-spacing:2px;text-transform:uppercase;color:#f87171;margin-bottom:5px;font-weight:700}
+.ci-item{display:flex;gap:7px;margin-bottom:3px;font-size:.78rem;color:rgba(248,113,113,.75)}
+
+/* ── FORM ELEMENTS ── */
+.field-label{font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:#4a6a8a;margin-bottom:5px;font-weight:700}
+input[type=number],input[type=text]{background:#0b1520;border:1px solid #1e3a5f;color:#e2eaf2;border-radius:8px;padding:11px 14px;font-size:.9rem;outline:none;width:100%;transition:border-color .2s}
+input:focus{border-color:#4a7a9a}
+.pill-btn{padding:8px 14px;border-radius:20px;border:2px solid transparent;font-size:.76rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;transition:all .2s}
+
+/* ── ALERT BOXES ── */
+.alert{border-radius:9px;padding:11px 14px;margin-bottom:12px;font-size:.81rem;line-height:1.65}
+.alert-info{background:rgba(30,58,95,.4);border:1px solid #1e3a5f;color:#64a0c8}
+.alert-warn{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);color:#fbbf24}
+.alert-danger{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.35);color:#f87171}
+.alert-success{background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.3);color:#34d399}
+
+/* ── TIMER ── */
+.timer-wrap{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.timer-circle-wrap{display:flex;flex-direction:column;align-items:center;min-width:160px}
+svg.timer-svg{transform:rotate(-90deg)}
+.timer-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.timer-time{font-family:'Courier New',monospace;font-size:1.9rem;font-weight:900;line-height:1}
+.timer-cycle{font-size:.58rem;letter-spacing:3px;color:#3a5a7a;margin-top:2px}
+.phase-badge{margin-top:10px;padding:5px 14px;border-radius:20px;font-size:.72rem;font-weight:800;letter-spacing:1px;text-align:center;border:1px solid}
+.log-entry{display:flex;gap:10px;margin-bottom:5px}
+.log-time{font-family:'Courier New',monospace;font-size:.68rem;color:#2a4a6a;min-width:76px}
+.log-msg{font-size:.78rem;color:#8aaccc}
+
+/* ── BROSELOW ── */
+.band-strip{display:flex;gap:2px;border-radius:9px;overflow:hidden;margin-bottom:18px}
+.band{flex:1;padding:8px 3px;text-align:center;cursor:pointer;transition:opacity .15s;border-radius:0}
+.band.active{box-shadow:0 0 0 3px #fff;border-radius:4px;z-index:1;position:relative}
+.band-color-name{font-size:.55rem;font-weight:800;color:#111;letter-spacing:.3px}
+.band-kg{font-size:.5rem;color:#333}
+.result-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.result-box{background:#121e2d;border-radius:8px;padding:11px 13px;border:1px solid}
+.result-label{font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:#3a5a7a;margin-bottom:3px}
+.result-val{font-family:'Courier New',monospace;font-size:1rem;font-weight:900}
+
+/* ── INTERACTION CHECKER ── */
+.drug-chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px}
+.chip{padding:6px 13px;border-radius:20px;font-size:.76rem;font-weight:700;letter-spacing:.5px;border:2px solid #1e3a5f;color:#3a5a7a;transition:all .2s}
+.chip.on{border-color:var(--c);background:rgba(255,255,255,.04);color:var(--c)}
+.ix-card{border-radius:9px;padding:13px 15px;margin-bottom:10px;border:1px solid}
+.ix-level{display:inline-block;padding:2px 9px;border-radius:4px;font-size:.66rem;font-weight:800;letter-spacing:1px;border:1px solid;margin-right:8px}
+.ix-drugs{font-weight:700;font-size:.88rem}
+.ix-note{font-size:.81rem;color:#8aaccc;line-height:1.6;margin-top:6px}
+
+/* ── PRINT CARDS ── */
+.print-card{background:#121e2d;border-radius:11px;padding:18px;margin-bottom:18px;border:2px solid}
+.print-card-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;border-bottom:1px solid;padding-bottom:10px}
+.print-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.print-step{display:flex;gap:7px;margin-bottom:6px;align-items:baseline}
+.print-step-n{font-family:'Courier New',monospace;font-weight:900;font-size:.82rem;min-width:18px;flex-shrink:0}
+.print-step-body{font-size:.75rem;color:#8aaccc;line-height:1.4}
+.print-step-title{font-weight:700;font-size:.8rem;margin-bottom:1px}
+.mini-drug{background:rgba(255,255,255,.03);border-radius:5px;padding:5px 9px;margin-bottom:5px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;border:1px solid rgba(255,255,255,.06)}
+.mini-drug-name{font-weight:800;font-size:.78rem}
+.mini-drug-dose{font-family:'Courier New',monospace;font-size:.75rem;font-weight:700}
+.mini-drug-ind{font-size:.65rem;color:#5a7a9a;margin-top:1px}
+
+/* ── CALC RESULT ── */
+.calc-result{border-radius:7px;padding:9px 12px;margin-top:6px;margin-bottom:2px}
+
+/* ── PROTOCOL SELECTOR ── */
+.proto-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.proto-tab{padding:10px 16px;border-radius:9px;font-size:.8rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;border:2px solid;transition:all .2s;display:flex;align-items:center;gap:7px}
+
+/* ── HT GRID ── */
+.ht-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0}
+.ht-box{background:#121e2d;border-radius:9px;padding:13px 15px;border:1px solid #1e3a5f}
+.ht-title{font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.ht-item{display:flex;gap:7px;margin-bottom:4px;font-size:.78rem;color:#7a9aaa}
+.ht-item::before{content:'▸';opacity:.5;flex-shrink:0}
+
+/* ── RESPONSIVE ── */
+@media(max-width:480px){
+  .drug-grid{grid-template-columns:1fr}
+  .ht-grid{grid-template-columns:1fr}
+  .print-cols{grid-template-columns:1fr}
+  .result-grid{grid-template-columns:repeat(2,1fr)}
+  .proto-tabs{gap:6px}
+  .proto-tab{padding:8px 12px;font-size:.72rem}
+}
+
+/* ── PRINT MEDIA ── */
+@media print{
+  #bottomnav,#header .install-btn,.no-print{display:none!important}
+  #header{position:relative;border:none;background:#fff!important;color:#000!important}
+  body,#app,#main{background:#fff!important;color:#000!important;padding:0}
+  .print-card{background:#fff!important;border-color:#ccc!important;break-inside:avoid;margin-bottom:24px}
+  .print-card *{color:#000!important;background:#fff!important;border-color:#ccc!important}
+  #main{padding:0 8px}
+}
+
+/* ── ANIMATIONS ── */
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(248,113,113,.5)}50%{box-shadow:0 0 0 10px rgba(248,113,113,0)}}
+.pulse{animation:pulse 2s infinite}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.fadein{animation:fadein .25s ease}
+
+/* ── INSTALL BANNER ── */
+#install-banner{display:none;background:linear-gradient(135deg,rgba(248,113,113,.15),rgba(167,139,250,.1));border:1px solid rgba(248,113,113,.3);border-radius:10px;padding:13px 16px;margin-bottom:16px;align-items:center;gap:12px;flex-wrap:wrap}
+#install-banner.show{display:flex}
+.install-banner-text{flex:1;min-width:180px;font-size:.83rem;color:#ccc;line-height:1.5}
+.install-banner-text strong{color:#fff;display:block;margin-bottom:2px}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <header id="header">
+    <div>
+      <div class="logo">ED CRITICAL CARE <span>PRO</span></div>
+      <div class="logo-sub">AHA 2025 · Emergency Quick Reference</div>
+    </div>
+    <button class="install-btn" id="installBtn" onclick="installApp()">
+      📲 Install App
+    </button>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <main id="main">
+    <div id="install-banner">
+      <div style="font-size:1.6rem">📲</div>
+      <div class="install-banner-text">
+        <strong>Install for offline use</strong>
+        Add to your home screen — works without WiFi during codes.
+      </div>
+      <button onclick="installApp()" style="background:#f87171;color:#fff;padding:8px 16px;border-radius:8px;font-weight:700;font-size:.8rem;letter-spacing:1px;white-space:nowrap">Install Now</button>
+      <button onclick="document.getElementById('install-banner').classList.remove('show')" style="color:#5a7a9a;font-size:.75rem;padding:4px 8px">✕</button>
+    </div>
+
+    <div id="view-protocols" class="view fadein"></div>
+    <div id="view-dosecalc" class="view fadein" style="display:none"></div>
+    <div id="view-timer" class="view fadein" style="display:none"></div>
+    <div id="view-broselow" class="view fadein" style="display:none"></div>
+    <div id="view-drugcheck" class="view fadein" style="display:none"></div>
+    <div id="view-print" class="view fadein" style="display:none"></div>
+  </main>
+
+  <!-- BOTTOM NAV -->
+  <nav id="bottomnav">
+    <button class="nav-item active" style="--c:#a78bfa" data-view="protocols" onclick="switchView('protocols')">
+      <span class="icon">📋</span>Protocols
+    </button>
+    <button class="nav-item" style="--c:#34d399" data-view="dosecalc" onclick="switchView('dosecalc')">
+      <span class="icon">⚖️</span>Dose Calc
+    </button>
+    <button class="nav-item" style="--c:#f87171" data-view="timer" onclick="switchView('timer')">
+      <span class="icon">⏱</span>CPR Timer
+    </button>
+    <button class="nav-item" style="--c:#60a5fa" data-view="broselow" onclick="switchView('broselow')">
+      <span class="icon">👶</span>Broselow
+    </button>
+    <button class="nav-item" style="--c:#fbbf24" data-view="drugcheck" onclick="switchView('drugcheck')">
+      <span class="icon">💊</span>Drug Check
+    </button>
+    <button class="nav-item" style="--c:#60a5fa" data-view="print" onclick="switchView('print')">
+      <span class="icon">🖨</span>Print
+    </button>
+  </nav>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════════════════
+const PROTOCOLS={
+  rsi:{label:"RSI",fullName:"Rapid Sequence Intubation",color:"#a78bfa",bg:"rgba(167,139,250,0.12)",border:"rgba(167,139,250,0.35)",icon:"🫁",
+    steps:[
+      {n:"1",title:"Preparation",body:"STATICS: Suction · Tools · Airway · Tube · IV · Cardiac monitor · Sedation. Two IVs, correct ETT size (adult ♀ 7.0–7.5 / ♂ 7.5–8.0), crash cart + rescue airways, videolaryngoscope preferred."},
+      {n:"2",title:"Preoxygenate",body:"Goal SpO₂ ≥ 95%. NRB mask 15 L/min × 3 min. BVM with PEEP valve if obtunded. High-flow nasal O₂ 15 L/min for apneic oxygenation during laryngoscopy."},
+      {n:"3",title:"Pretreat (Optional)",body:"Fentanyl 2–3 mcg/kg IV (3 min before) — blunts sympathetic surge. Lidocaine 1.5 mg/kg IV — may ↓ ICP rise. Atropine 0.02 mg/kg — peds bradycardia prevention with succinylcholine."},
+      {n:"4",title:"Induce",body:"Give induction agent. Ketamine if hemodynamically unstable. Etomidate if stable. Propofol if stable, no adrenal concern. See Dose Calc tab for weight-based dosing."},
+      {n:"5",title:"Paralyze",body:"Administer NMB immediately after induction — NO delay. Succinylcholine 1.5 mg/kg (first-line, 30–60 sec onset). Rocuronium 1.2–1.6 mg/kg if SCh contraindicated."},
+      {n:"6",title:"Intubate",body:"One best attempt during apnea window (≤30 sec). Apply cricoid pressure. ETT depth: 21–23 cm (adult ♀), 23–25 cm (♂). Max 3 attempts before rescue airway."},
+      {n:"7",title:"Confirm",body:"Waveform ETCO₂ = gold standard. Bilateral breath sounds + chest rise. Inflate cuff 20–30 cmH₂O. Begin post-intubation sedation IMMEDIATELY. Portable CXR."}
+    ]
+  },
+  acls:{label:"ACLS",fullName:"Adult Cardiac Arrest",color:"#f87171",bg:"rgba(248,113,113,0.12)",border:"rgba(248,113,113,0.35)",icon:"❤️",
+    steps:[
+      {n:"1",title:"Recognize & Activate",body:"Confirm unresponsive, no pulse, no breathing. Activate code team. Note arrest time. Assign roles: compressor, airway, medications, recorder, team leader."},
+      {n:"2",title:"High-Quality CPR",body:"Rate 100–120/min · Depth ≥ 2 inches · Full chest recoil · Pause < 10 sec · Rotate compressor q2 min. 30:2 ratio until advanced airway placed. Use CPR feedback device."},
+      {n:"3",title:"Attach Monitor + Defib",body:"Apply pads/leads ASAP. Assess rhythm without interrupting CPR. VF or pVT → shock immediately. Rhythm check every 2 minutes."},
+      {n:"4",title:"Shockable? → Defib",body:"VF / Pulseless VT: Biphasic 120–200 J (device-specific) or Monophasic 360 J. Resume CPR immediately after shock — no pulse check. Reanalyze at 2-min mark."},
+      {n:"5",title:"IV / IO Access",body:"2025 AHA: Prefer IV over IO when feasible. IO as backup if IV not established quickly. Flush all meds with 20 mL NS + elevate limb 10–20 sec."},
+      {n:"6",title:"Epi + Antiarrhythmics",body:"Epi 1 mg IV/IO q3–5 min (ALL rhythms). Amiodarone 300 mg → 150 mg IV/IO for shock-refractory VF/pVT (after 3rd shock). Search & treat H's & T's throughout."},
+      {n:"7",title:"ROSC + Post-Arrest Care",body:"Pulse + BP = ROSC. 12-lead ECG (emergent PCI if STEMI). Target SpO₂ 94–98%. MAP ≥ 65 mmHg. Targeted temperature management. ICU admission."}
+    ],
+    hst:{
+      h:["Hypovolemia — bolus fluids, control hemorrhage","Hypoxia — secure airway, 100% O₂","Hydrogen ion (Acidosis) — sodium bicarbonate","Hypo/Hyperkalemia — treat electrolytes","Hypothermia — warm aggressively"],
+      t:["Tension Pneumothorax — needle decompression","Tamponade (cardiac) — pericardiocentesis","Toxins/Poisons — antidotes (naloxone, etc.)","Thrombosis (Pulmonary) — consider thrombolytics","Thrombosis (Coronary) — emergent PCI"]
+    }
+  },
+  pals:{label:"PALS",fullName:"Pediatric Cardiac Arrest",color:"#34d399",bg:"rgba(52,211,153,0.12)",border:"rgba(52,211,153,0.35)",icon:"👶",
+    steps:[
+      {n:"1",title:"Recognize & Activate",body:"Unresponsive infant/child, no pulse. Activate pediatric code. Get weight via Broselow if unknown. Assign roles."},
+      {n:"2",title:"High-Quality CPR (Peds)",body:"Rate ≥ 100/min · Depth = 1/3 AP diameter (~4 cm infant, ~5 cm child) · Full recoil · 2-rescuer ratio = 15:2 · Once advanced airway: 1 breath q6–8 sec (8–10/min)."},
+      {n:"3",title:"Attach Monitor",body:"Pads ASAP. Manual defibrillator preferred in all children. If unavailable, AED with pediatric dose attenuator (< 8 yrs / < 25 kg)."},
+      {n:"4",title:"Shockable? → Defib (Peds)",body:"1st shock: 2 J/kg. 2nd shock: 4 J/kg. Subsequent: ≥ 4 J/kg (max 10 J/kg or adult dose). Resume CPR immediately after each shock — no pause."},
+      {n:"5",title:"IO / IV Access",body:"IO is fast and first-line acceptable in peds arrest. Sites: proximal tibia, distal femur, proximal humerus. Confirm placement before drugs."},
+      {n:"6",title:"Weight-Based Drugs",body:"Epi 0.01 mg/kg IV/IO q3–5 min (max 1 mg). Amiodarone 5 mg/kg (max 300 mg) for shock-refractory VF/pVT. CHECK GLUCOSE in every pediatric arrest."},
+      {n:"7",title:"ROSC + Post-Arrest Care",body:"Continuous monitoring. SpO₂ 94–98%. Avoid hypoglycemia. Temperature management (avoid hyperthermia). Emergent PICU transfer."}
+    ],
+    hst:{
+      h:["Hypovolemia — 10–20 mL/kg NS rapidly","Hypoxia — O₂, BVM, airway","Hydrogen ion (Acidosis) — bicarb if severe","Hypoglycemia — D10W/D25W — CHECK EVERY ARREST","Hypo/Hyperkalemia — treat electrolytes","Hypothermia — warm environment, warm fluids"],
+      t:["Tension Pneumothorax — needle decompression (2nd ICS MCL)","Tamponade — pericardiocentesis","Toxins — antidotes, activated charcoal if appropriate","Thrombosis (Pulmonary) — rare, consider in older teens","Thrombosis (Coronary) — very rare in peds"]
+    }
+  }
+};
+
+const DRUGS={
+  rsi:[
+    {name:"Ketamine",class:"Induction",color:"#a78bfa",dose:"1–2 mg/kg IV",onset:"30–40 sec",duration:"10–20 min",moa:"NMDA antagonist → dissociation, bronchodilation, ↑ BP & HR, maintains airway reflexes",ind:"Hypotension, asthma, trauma, peds RSI",ci:["Severe uncontrolled HTN (relative)","Known psychosis (relative)"],warn:"↑ secretions — co-administer glycopyrrolate; ICP elevation debated",wt:true,wtF:1.5},
+    {name:"Etomidate",class:"Induction",color:"#60a5fa",dose:"0.3 mg/kg IV",onset:"30–60 sec",duration:"3–12 min",moa:"GABA-A agonist → hemodynamically neutral sedation, ↓ ICP, minimal CV effects",ind:"Hemodynamically stable patients, trauma, elevated ICP",ci:["Adrenal insufficiency","Septic shock (single dose still debated)"],warn:"Myoclonic movements common; adrenal suppression (single dose debated)",wt:true,wtF:0.3},
+    {name:"Propofol",class:"Induction",color:"#fbbf24",dose:"1–2 mg/kg IV",onset:"15–30 sec",duration:"5–10 min",moa:"GABA-A potentiation → rapid smooth induction, ↓ ICP, antiemetic",ind:"Hemodynamically stable patients only",ci:["Hypotension","Hypovolemia","Egg/soy allergy (relative)"],warn:"Significant ↓ BP — AVOID in hemodynamically unstable; painful on injection",wt:true,wtF:1.5},
+    {name:"Midazolam",class:"Induction (Backup)",color:"#f472b6",dose:"0.1–0.3 mg/kg IV",onset:"1–2.5 min",duration:"20–40 min",moa:"GABA-A agonist → anxiolysis, amnesia, muscle relaxation; reversible with flumazenil",ind:"Backup when other induction agents unavailable",ci:["Acute narrow-angle glaucoma"],warn:"Slowest onset; variable depth; causes ↓ BP; longer duration than ideal",wt:true,wtF:0.2},
+    {name:"Succinylcholine",class:"Paralytic (Depolarizing)",color:"#f87171",dose:"1.5 mg/kg IV (peds: 2 mg/kg)",onset:"30–60 sec",duration:"5–15 min",moa:"Depolarizes nicotinic ACh receptors → fasciculations → flaccid paralysis (ultra-short)",ind:"First-line NMB for RSI — fastest available onset",ci:["Hyperkalemia","Burns > 24h old","Crush injury / rhabdomyolysis","Neuromuscular disease (ALS, MS, myopathies)","Personal or family Hx of malignant hyperthermia","Penetrating eye injury","Denervation injuries > 72h"],warn:"K⁺ rises ~0.5–1 mEq/L — FATAL in already hyperkalemic pts; may transiently ↑ ICP",wt:true,wtF:1.5},
+    {name:"Rocuronium",class:"Paralytic (Non-Depolaring)",color:"#fb923c",dose:"1.2–1.6 mg/kg IV (RSI dose)",onset:"60 sec (high dose)",duration:"40–90 min",moa:"Competitive nicotinic ACh receptor blocker — no fasciculations, hemodynamically neutral",ind:"RSI when succinylcholine is contraindicated",ci:["Known anaphylaxis to rocuronium"],warn:"LONG duration — if cannot intubate, patient remains paralyzed. Reversal: Sugammadex 16 mg/kg IV immediately.",wt:true,wtF:1.4}
+  ],
+  acls:[
+    {name:"Epinephrine",class:"Vasopressor",color:"#f87171",dose:"1 mg IV/IO q3–5 min",onset:"Immediate",duration:"3–5 min",moa:"α1/β1/β2 agonist → ↑ coronary perfusion pressure, ↑ SVR, ↑ HR & contractility",ind:"ALL cardiac arrest rhythms — VF, pVT, PEA, asystole",ci:[],warn:"Flush with 20 mL NS + elevate limb. IV preferred over IO (AHA 2025).",wt:false},
+    {name:"Amiodarone",class:"Antiarrhythmic (Class III)",color:"#f87171",dose:"300 mg IV/IO bolus (2nd dose: 150 mg)",onset:"Minutes",duration:"Hours",moa:"Blocks Na⁺, K⁺, Ca²⁺ channels + β-blockade → prolongs action potential, ↓ automaticity",ind:"Shock-refractory VF / pulseless VT — after 3rd shock",ci:["Torsades de pointes","Iodine allergy (relative)"],warn:"↓ BP and bradycardia post-ROSC; multiple drug interactions; QT prolongation",wt:false},
+    {name:"Lidocaine",class:"Antiarrhythmic (Class IB)",color:"#fbbf24",dose:"1–1.5 mg/kg IV/IO; repeat 0.5–0.75 mg/kg q5–10 min",onset:"45–90 sec",duration:"10–20 min",moa:"Blocks fast Na⁺ channels → ↓ automaticity in ischemic tissue",ind:"Alternative to amiodarone; shock-refractory VF/pVT",ci:["Known lidocaine hypersensitivity","WPW with AF"],warn:"CNS toxicity (seizures) at high doses. Max 3 mg/kg total.",wt:false},
+    {name:"Sodium Bicarbonate",class:"Alkalinizer",color:"#60a5fa",dose:"1 mEq/kg IV/IO",onset:"Immediate",duration:"Variable",moa:"Buffers metabolic acidosis; reverses hyperkalemia toxicity; alkalinizes urine (TCA OD)",ind:"Hyperkalemia, TCA overdose, severe pre-existing metabolic acidosis",ci:["Routine cardiac arrest (NOT indicated)"],warn:"NOT routine in arrest. Causes hypernatremia, ↑ CO₂, ↓ ionized Ca²⁺. Do NOT mix with epinephrine in same line.",wt:false},
+    {name:"Calcium Chloride",class:"Electrolyte",color:"#34d399",dose:"1 g (10 mL of 10%) IV slow push",onset:"1–3 min",duration:"30–60 min",moa:"Stabilizes cardiac membrane; antagonizes hyperkalemia, hypermagnesemia, hypocalcemia",ind:"Hyperkalemia, hypermagnesemia, hypocalcemia, calcium channel blocker OD",ci:["Digoxin toxicity (relative — may worsen)"],warn:"Extravasation causes tissue necrosis — central line preferred.",wt:false}
+  ],
+  pals:[
+    {name:"Epinephrine",class:"Vasopressor",color:"#34d399",dose:"0.01 mg/kg IV/IO q3–5 min (max 1 mg)",onset:"Immediate",duration:"3–5 min",moa:"α1/β1/β2 agonist → ↑ coronary perfusion pressure, ↑ SVR, ↑ contractility",ind:"ALL pediatric cardiac arrest rhythms",ci:[],warn:"Use 1:10,000 for IV/IO — NOT 1:1,000. ET dose: 0.1 mg/kg. Flush with NS after.",wt:true,wtF:0.01,maxD:1},
+    {name:"Amiodarone",class:"Antiarrhythmic (Class III)",color:"#34d399",dose:"5 mg/kg IV/IO bolus (max 300 mg); repeat ×2",onset:"Minutes",duration:"Hours",moa:"Blocks Na⁺, K⁺, Ca²⁺ channels + β-blockade → prolongs action potential, ↓ automaticity",ind:"Shock-refractory VF or pulseless VT — after 3rd shock",ci:["Torsades de pointes"],warn:"Flush with D5W — NOT NS (precipitates). Monitor BP post-ROSC.",wt:true,wtF:5,maxD:300},
+    {name:"Lidocaine",class:"Antiarrhythmic (Class IB)",color:"#60a5fa",dose:"1 mg/kg IV/IO; infusion 20–50 mcg/kg/min post-ROSC",onset:"45–90 sec",duration:"10–20 min",moa:"Blocks fast Na⁺ channels → ↓ automaticity in ischemic myocardium",ind:"Alternative to amiodarone; shock-refractory VF/pVT",ci:["Known allergy"],warn:"CNS toxicity at toxic levels (seizures). Max 3 mg/kg.",wt:true,wtF:1,maxD:null},
+    {name:"Adenosine",class:"Nodal Antiarrhythmic",color:"#fbbf24",dose:"0.1 mg/kg rapid IV push (max 6 mg); 2nd: 0.2 mg/kg (max 12 mg)",onset:"< 10 sec",duration:"< 30 sec",moa:"Slows AV node conduction → interrupts re-entry circuits → brief sinus pause",ind:"SVT WITH pulse — NOT cardiac arrest",ci:["Cardiac arrest","2nd/3rd degree AV block","Sick sinus syndrome","WPW with wide-complex tachycardia"],warn:"Half-life < 10 sec — push FAST at most proximal site + immediate 5–10 mL flush. Transient asystole is expected.",wt:true,wtF:0.1,maxD:6},
+    {name:"Atropine",class:"Anticholinergic",color:"#a78bfa",dose:"0.02 mg/kg IV/IO (min 0.1 mg, max 0.5 mg/dose)",onset:"1–2 min",duration:"1–2 h",moa:"Blocks muscarinic receptors → ↑ SA node rate, ↑ AV conduction, ↑ HR",ind:"Symptomatic bradycardia WITH pulse; RSI pretreatment in peds",ci:["Tachycardia"],warn:"Min dose 0.1 mg — below causes paradoxical bradycardia. Causes tachycardia, dry mouth, urinary retention.",wt:true,wtF:0.02,minD:0.1,maxD:0.5},
+    {name:"Dextrose",class:"Glucose Supplement",color:"#fb923c",dose:"Neonate: D10W 5 mL/kg · Child: D25W 2 mL/kg · Adolescent: D50W 1 mL/kg",onset:"Immediate",duration:"Variable",moa:"Provides immediate glucose for cerebral metabolism and cardiac function",ind:"Hypoglycemia — CHECK GLUCOSE IN EVERY PEDIATRIC ARREST",ci:["Hyperglycemia"],warn:"Use age-appropriate concentration. Recheck glucose after dose.",wt:false}
+  ]
+};
+
+const BROSELOW=[
+  {color:"Grey", hex:"#9ca3af", kg:"3–5",  age:"Neonate",   etSize:"3.0–3.5", etDepth:"9–10 cm",  defib:"4–10 J",   epi:"0.03–0.05 mg"},
+  {color:"Pink", hex:"#f9a8d4", kg:"6–7",  age:"0–6 mo",   etSize:"3.5",      etDepth:"10.5–11 cm",defib:"12–14 J",  epi:"0.06–0.07 mg"},
+  {color:"Red",  hex:"#f87171", kg:"8–9",  age:"6–12 mo",  etSize:"3.5–4.0",  etDepth:"12 cm",    defib:"16–18 J",  epi:"0.08–0.09 mg"},
+  {color:"Purple",hex:"#a78bfa",kg:"10–11",age:"12–18 mo", etSize:"4.0",      etDepth:"13 cm",    defib:"20–22 J",  epi:"0.10–0.11 mg"},
+  {color:"Yellow",hex:"#fde68a",kg:"12–14",age:"2–3 yr",   etSize:"4.5",      etDepth:"14–15 cm", defib:"24–28 J",  epi:"0.12–0.14 mg"},
+  {color:"White", hex:"#e5e7eb",kg:"15–18",age:"4–5 yr",   etSize:"5.0",      etDepth:"16 cm",    defib:"30–36 J",  epi:"0.15–0.18 mg"},
+  {color:"Blue",  hex:"#60a5fa",kg:"19–23",age:"6–7 yr",   etSize:"5.5",      etDepth:"17–18 cm", defib:"38–46 J",  epi:"0.19–0.23 mg"},
+  {color:"Orange",hex:"#fb923c",kg:"24–29",age:"8–9 yr",   etSize:"6.0 (cuffed)",etDepth:"19–20 cm",defib:"48–58 J",epi:"0.24–0.29 mg"},
+  {color:"Green", hex:"#34d399",kg:"30–36",age:"10–11 yr", etSize:"6.5 (cuffed)",etDepth:"21–22 cm",defib:"60–72 J",epi:"0.30–0.36 mg"}
+];
+
+const INTERACTIONS=[
+  {drugs:["Amiodarone","Lidocaine"],level:"HIGH",note:"Additive QT prolongation with risk of fatal arrhythmia. Avoid concurrent use. If switching, monitor cardiac rhythm closely."},
+  {drugs:["Sodium Bicarbonate","Epinephrine"],level:"HIGH",note:"Do NOT administer via same IV line. Sodium bicarb inactivates epinephrine. Flush line thoroughly with NS between each drug."},
+  {drugs:["Calcium Chloride","Sodium Bicarbonate"],level:"HIGH",note:"Precipitates immediately if mixed. NEVER administer via same IV line simultaneously. Flush with NS between."},
+  {drugs:["Amiodarone","Adenosine"],level:"MOD",note:"Amiodarone potentiates adenosine effect — may cause prolonged AV block. Use caution and have pacing available."},
+  {drugs:["Midazolam","Propofol"],level:"MOD",note:"Synergistic CNS and respiratory depression. Increases hypotension and apnea risk significantly. Reduce doses if combined."},
+  {drugs:["Propofol","Ketamine"],level:"LOW",note:"'Ketofol' combination intentionally counterbalances hemodynamic effects. Monitor HR and BP closely. Often used beneficially."},
+  {drugs:["Ketamine","Atropine"],level:"LOW",note:"Ketamine increases secretions; atropine (or glycopyrrolate) can be given concurrently to reduce this. Beneficial pairing in RSI."},
+  {drugs:["Succinylcholine","Rocuronium"],level:"INFO",note:"Do NOT give together. Succinylcholine must be fully metabolized before rocuronium — otherwise prolonged and unpredictable neuromuscular block."},
+  {drugs:["Epinephrine","Lidocaine"],level:"INFO",note:"At systemic ACLS doses, no significant interaction. Epinephrine with local lidocaine prolongs local effect — only relevant for wound care."}
+];
+
+const ALL_DRUG_NAMES=[...new Set([...DRUGS.rsi,...DRUGS.acls,...DRUGS.pals].map(d=>d.name))];
+
+// ═══════════════════════════════════════════════════════════
+//  TIMER STATE
+// ═══════════════════════════════════════════════════════════
+let timerInterval=null,timerSeconds=120,timerCycle=1,timerEpi=0,timerRunning=false,timerPhase="CPR",timerLog=[];
+const TOTAL=120;
+
+// ═══════════════════════════════════════════════════════════
+//  ROUTER
+// ═══════════════════════════════════════════════════════════
+let currentView="protocols";
+function switchView(v){
+  document.querySelectorAll(".view").forEach(el=>el.style.display="none");
+  document.getElementById("view-"+v).style.display="block";
+  document.querySelectorAll(".nav-item").forEach(b=>b.classList.remove("active"));
+  document.querySelector(`[data-view="${v}"]`).classList.add("active");
+  currentView=v;
+  renderView(v);
+}
+
+function renderView(v){
+  const el=document.getElementById("view-"+v);
+  if(v==="protocols") renderProtocols(el);
+  else if(v==="dosecalc") renderDoseCalc(el);
+  else if(v==="timer") renderTimer(el);
+  else if(v==="broselow") renderBroselow(el);
+  else if(v==="drugcheck") renderDrugCheck(el);
+  else if(v==="print") renderPrint(el);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PROTOCOLS VIEW
+// ═══════════════════════════════════════════════════════════
+let protoKey="rsi", openDrugIdx=null;
+function renderProtocols(el){
+  const p=PROTOCOLS[protoKey], drugs=DRUGS[protoKey];
+  el.innerHTML=`
+    <div class="proto-tabs">
+      ${Object.entries(PROTOCOLS).map(([k,v])=>`
+        <button class="proto-tab" style="--c:${v.color};border-color:${k===protoKey?v.color:"#1e3a5f"};background:${k===protoKey?v.bg:"rgba(255,255,255,0.02)"};color:${k===protoKey?v.color:"#3a5a7a"}"
+          onclick="protoKey='${k}';openDrugIdx=null;renderProtocols(document.getElementById('view-protocols'))">
+          ${v.icon} ${v.label}
+        </button>`).join("")}
+    </div>
+
+    <div class="sec-title" style="color:${p.color}">${p.icon} PROTOCOL STEPS</div>
+    <div class="sec-sub">AHA 2025 · ${p.fullName}</div>
+
+    ${p.steps.map((s,i)=>`
+      <div class="card" style="border-color:${p.border.replace("0.35","0.18")}">
+        <div class="step-head" style="background:${p.bg}">
+          <div class="step-num" style="color:${p.color}">${s.n}</div>
+          <div class="step-title">${s.title}</div>
+          ${i<p.steps.length-1?`<div class="arrow" style="color:${p.color}">▼</div>`:`<span style="margin-left:auto;font-size:.62rem;color:${p.color};background:${p.bg};border:1px solid ${p.border};border-radius:4px;padding:2px 7px">END</span>`}
+        </div>
+        <div class="step-body">${s.body}</div>
+      </div>`).join("")}
+
+    ${p.hst?`
+      <div class="sec-title" style="color:${p.color};margin-top:20px">🔍 REVERSIBLE CAUSES — H's & T's</div>
+      <div class="sec-sub">Search and treat throughout resuscitation</div>
+      <div class="ht-grid">
+        <div class="ht-box">
+          <div class="ht-title" style="color:${p.color}">🅗 THE H's</div>
+          ${p.hst.h.map(h=>`<div class="ht-item">${h}</div>`).join("")}
+        </div>
+        <div class="ht-box">
+          <div class="ht-title" style="color:#fb923c">🅣 THE T's</div>
+          ${p.hst.t.map(t=>`<div class="ht-item">${t}</div>`).join("")}
+        </div>
+      </div>`:""}
+
+    <div class="sec-title" style="color:${p.color};margin-top:4px">💊 MEDICATIONS</div>
+    <div class="sec-sub">Tap a card to expand contraindications</div>
+    <div class="drug-grid">
+      ${drugs.map((d,i)=>`
+        <div class="drug-card" style="--c:${d.color}" onclick="toggleDrug(${i})">
+          <div class="drug-name">${d.name}</div>
+          <div class="drug-class">${d.class}</div>
+          <div class="dose-badge">${d.dose}</div>
+          <div class="drug-row"><span class="drug-label">Onset</span><span class="drug-value">${d.onset}</span></div>
+          <div class="drug-row"><span class="drug-label">Duration</span><span class="drug-value">${d.duration}</span></div>
+          <div class="drug-row"><span class="drug-label">Mechanism</span><span class="drug-value">${d.moa}</span></div>
+          ${openDrugIdx===i?`
+            <div class="ci-section">
+              <div class="drug-row"><span class="drug-label">For</span><span class="drug-value">${d.ind}</span></div>
+              ${d.ci.length?`<div class="ci-label">⛔ CONTRAINDICATIONS</div>${d.ci.map(c=>`<div class="ci-item"><span style="color:#f87171">✗</span>${c}</div>`).join("")}`:""}
+              ${d.warn?`<div class="warn-tag" style="display:block;line-height:1.5;font-size:.72rem;margin-top:6px;padding:5px 9px">⚠ ${d.warn}</div>`:""}
+            </div>`:""}
+          <div class="expand-hint">${openDrugIdx===i?"▲ less":"▼ contraindications"}</div>
+        </div>`).join("")}
+    </div>
+
+    <div class="alert alert-danger" style="margin-top:20px">
+      ⚠ <strong>Educational use only.</strong> Verify all doses with current AHA guidelines and your institution's protocols before any clinical administration.
+    </div>
+    <p style="font-size:.62rem;color:#2a4a6a;margin-top:12px;line-height:1.7">Sources: AHA/AAP 2025 CPR & ECC Guidelines · StatPearls NCBI · Merck Manual Professional (2024) · ACLS.net · AHA PALS Algorithm PDF (cpr.heart.org 2025)</p>
+  `;
+}
+function toggleDrug(i){openDrugIdx=openDrugIdx===i?null:i;renderProtocols(document.getElementById("view-protocols"));}
+
+// ═══════════════════════════════════════════════════════════
+//  DOSE CALCULATOR
+// ═══════════════════════════════════════════════════════════
+let calcWt="", calcProto="rsi";
+function renderDoseCalc(el){
+  const p=PROTOCOLS[calcProto], drugs=DRUGS[calcProto];
+  const wt=parseFloat(calcWt);
+  el.innerHTML=`
+    <div class="sec-title" style="color:#34d399">⚖️ DOSE CALCULATOR</div>
+    <div class="sec-sub">Enter patient weight for individualized doses</div>
+
+    <div style="display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;align-items:flex-end">
+      <div style="flex:1;min-width:140px">
+        <div class="field-label">Patient Weight (kg)</div>
+        <input type="number" min="1" max="250" placeholder="e.g. 70" value="${calcWt}"
+          oninput="calcWt=this.value;renderDoseCalc(document.getElementById('view-dosecalc'))"/>
+      </div>
+      <div style="flex:2;min-width:220px">
+        <div class="field-label">Protocol</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          ${Object.entries(PROTOCOLS).map(([k,v])=>`
+            <button class="pill-btn" style="border-color:${k===calcProto?v.color:"#1e3a5f"};background:${k===calcProto?v.bg:"transparent"};color:${k===calcProto?v.color:"#3a5a7a"}"
+              onclick="calcProto='${k}';renderDoseCalc(document.getElementById('view-dosecalc'))">${v.icon} ${v.label}</button>`).join("")}
+        </div>
+      </div>
+    </div>
+
+    ${!calcWt?`<div class="alert alert-info">Enter a patient weight above to calculate individualized doses. ACLS adult doses are fixed (not weight-based).</div>`:""}
+
+    <div class="drug-grid">
+      ${drugs.map(d=>{
+        let calcHTML="";
+        if(d.wt && !isNaN(wt) && wt>0){
+          let dose=wt*d.wtF;
+          if(d.maxD) dose=Math.min(dose,d.maxD);
+          if(d.minD) dose=Math.max(dose,d.minD);
+          const capped=d.maxD&&wt*d.wtF>=d.maxD;
+          const vol=d.name==="Epinephrine"&&calcProto==="pals"?`= ${(dose/0.1).toFixed(1)} mL (1:10,000)`:"";
+          calcHTML=`<div class="calc-result" style="background:${d.color}12;border:1px solid ${d.color}30;border-radius:7px;padding:9px 12px;margin-bottom:8px">
+            <div class="field-label" style="margin-bottom:3px">For ${wt.toFixed(0)} kg patient</div>
+            <div style="font-family:'Courier New',monospace;font-size:1.2rem;font-weight:900;color:${d.color}">${dose.toFixed(2)} mg</div>
+            ${vol?`<div style="font-size:.75rem;color:#8aaccc;margin-top:2px">${vol}</div>`:""}
+            ${capped?`<div class="warn-tag" style="margin-top:4px">Max dose applied (${d.maxD} mg)</div>`:""}
+          </div>`;
+        }
+        return `<div class="drug-card" style="--c:${d.color};cursor:default">
+          <div class="drug-name">${d.name}</div>
+          <div class="drug-class">${d.class}</div>
+          <div class="dose-badge">${d.dose}</div>
+          ${calcHTML}
+          <div class="drug-row"><span class="drug-label">Onset</span><span class="drug-value">${d.onset}</span></div>
+          <div class="drug-row"><span class="drug-label">For</span><span class="drug-value">${d.ind}</span></div>
+          ${d.warn?`<div class="ci-tag" style="display:block;margin-top:6px;font-size:.7rem;line-height:1.5">⚠ ${d.warn.split(";")[0]}</div>`:""}
+        </div>`;
+      }).join("")}
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CPR TIMER
+// ═══════════════════════════════════════════════════════════
+function phaseColor(){return timerPhase==="CPR"?"#f87171":timerPhase==="RHYTHM"?"#fbbf24":"#34d399";}
+function phaseLabel(){return timerPhase==="CPR"?"💪 HIGH-QUALITY CPR":timerPhase==="RHYTHM"?"⚡ RHYTHM CHECK":"💊 SHOCK / DRUGS";}
+function addLog(msg){timerLog=[{t:new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"}),msg},...timerLog].slice(0,12);}
+
+function tickTimer(){
+  timerSeconds--;
+  if(timerSeconds<=0){
+    timerCycle++;
+    if(timerPhase==="CPR"){timerPhase="RHYTHM";addLog("🔍 RHYTHM CHECK — pause CPR < 10 sec");}
+    else if(timerPhase==="RHYTHM"){timerPhase="SHOCK";addLog("⚡ SHOCK if indicated + EPINEPHRINE 1 mg IV/IO");}
+    else{timerPhase="CPR";addLog("💪 RESUME HIGH-QUALITY CPR — rotate compressor");}
+    timerSeconds=TOTAL;
+  }
+  if(currentView==="timer") renderTimer(document.getElementById("view-timer"));
+}
+
+function startTimer(){
+  if(!timerRunning){
+    if(timerSeconds===TOTAL&&timerCycle===1) addLog("🚨 CODE STARTED — time noted");
+    timerRunning=true;
+    timerInterval=setInterval(tickTimer,1000);
+    renderTimer(document.getElementById("view-timer"));
+  }
+}
+function pauseTimer(){timerRunning=false;clearInterval(timerInterval);renderTimer(document.getElementById("view-timer"));}
+function resetTimer(){timerRunning=false;clearInterval(timerInterval);timerSeconds=TOTAL;timerCycle=1;timerEpi=0;timerPhase="CPR";timerLog=[];renderTimer(document.getElementById("view-timer"));}
+function logEpi(){timerEpi++;addLog(`💊 EPINEPHRINE given — dose #${timerEpi}`);if(currentView==="timer")renderTimer(document.getElementById("view-timer"));}
+
+function renderTimer(el){
+  const mm=String(Math.floor(timerSeconds/60)).padStart(2,"0");
+  const ss=String(timerSeconds%60).padStart(2,"0");
+  const pct=timerSeconds/TOTAL;
+  const r=52,c=2*Math.PI*r;
+  const pc=c*(1-pct);
+  const col=phaseColor();
+  el.innerHTML=`
+    <div class="sec-title" style="color:#f87171">⏱ CPR CYCLE TIMER</div>
+    <div class="sec-sub">AHA 2025 · 2-min cycles · Epi q3–5 min · Rotate compressor q2 min</div>
+
+    <div class="alert alert-danger pulse" style="margin-bottom:16px">
+      <strong>Active Code Tool</strong> — Timer tracks 2-minute CPR cycles with phase alerts. Use alongside your code team.
+    </div>
+
+    <div class="timer-wrap">
+      <div class="timer-circle-wrap">
+        <div style="position:relative;width:130px;height:130px">
+          <svg class="timer-svg" width="130" height="130" viewBox="0 0 130 130">
+            <circle cx="65" cy="65" r="${r}" stroke="#1e3a5f" stroke-width="7" fill="none"/>
+            <circle cx="65" cy="65" r="${r}" stroke="${col}" stroke-width="7" fill="none"
+              stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${pc.toFixed(1)}"
+              stroke-linecap="round" style="transition:stroke-dashoffset 1s linear;transform-origin:50% 50%"/>
+          </svg>
+          <div class="timer-inner">
+            <div class="timer-time" style="color:${col}">${mm}:${ss}</div>
+            <div class="timer-cycle">CYCLE ${timerCycle}</div>
+          </div>
+        </div>
+        <div class="phase-badge" style="color:${col};border-color:${col};background:${col}15">${phaseLabel()}</div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;justify-content:center">
+          ${timerRunning
+            ?`<button onclick="pauseTimer()" style="background:#fbbf24;color:#000;padding:9px 18px;border-radius:8px;font-weight:700;font-size:.8rem;letter-spacing:1px">⏸ PAUSE</button>`
+            :`<button onclick="startTimer()" style="background:#34d399;color:#000;padding:9px 18px;border-radius:8px;font-weight:700;font-size:.8rem;letter-spacing:1px">${timerSeconds===TOTAL&&timerCycle===1?"▶ START CODE":"▶ RESUME"}</button>`}
+          <button onclick="resetTimer()" style="background:transparent;border:2px solid #3a5a7a;color:#5a7a9a;padding:9px 18px;border-radius:8px;font-weight:700;font-size:.8rem">↺ RESET</button>
+        </div>
+      </div>
+
+      <div style="flex:1;min-width:200px">
+        <div style="background:#121e2d;border:1px solid #1e3a5f;border-radius:10px;padding:14px;margin-bottom:12px">
+          <div class="field-label" style="margin-bottom:8px">Epinephrine Tracker</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="font-family:'Courier New',monospace;font-size:2rem;font-weight:900;color:#f87171;line-height:1">${timerEpi}</div>
+            <div>
+              <div style="font-size:.75rem;color:#5a7a9a;margin-bottom:5px">doses given<br><span style="font-size:.68rem">Adult: 1mg · Peds: 0.01 mg/kg</span></div>
+              <button onclick="logEpi()" style="background:#f87171;color:#fff;padding:7px 13px;border-radius:7px;font-weight:700;font-size:.75rem;letter-spacing:1px">+ LOG EPI DOSE</button>
+            </div>
+          </div>
+        </div>
+        <div style="background:#121e2d;border:1px solid #1e3a5f;border-radius:10px;padding:13px">
+          <div class="field-label" style="margin-bottom:8px">Code Reminders</div>
+          ${[
+            ["#f87171","Compressions: 100–120/min, ≥2\" depth, full recoil"],
+            ["#fbbf24","Rhythm check: < 10 sec pause every 2 min"],
+            ["#34d399","Shock first — CPR immediately after, no pulse check"],
+            ["#a78bfa","Epi q3–5 min · Amiodarone 300 mg after 3rd shock"],
+            ["#60a5fa","Search and treat H's & T's throughout"],
+          ].map(([c,t])=>`<div style="display:flex;gap:7px;margin-bottom:5px;align-items:baseline"><span style="color:${c};font-size:.7rem">▸</span><span style="font-size:.78rem;color:#7a9aaa">${t}</span></div>`).join("")}
+        </div>
+      </div>
+    </div>
+
+    ${timerLog.length?`
+      <div style="background:#0b1520;border:1px solid #1e3a5f;border-radius:9px;padding:13px;margin-top:14px">
+        <div class="field-label" style="margin-bottom:8px">📋 Event Log</div>
+        ${timerLog.map((e,i)=>`
+          <div class="log-entry" style="opacity:${Math.max(0.35,1-i*0.12)}">
+            <span class="log-time">${e.t}</span>
+            <span class="log-msg">${e.msg}</span>
+          </div>`).join("")}
+      </div>`:""}
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  BROSELOW
+// ═══════════════════════════════════════════════════════════
+let broLengthInput="", broSelected=null;
+const BROSELOW_THRESHOLDS=[50,60,70,80,90,100,115,125,138];
+
+function renderBroselow(el){
+  const b=broSelected!==null?BROSELOW[broSelected]:null;
+  el.innerHTML=`
+    <div class="sec-title" style="color:#34d399">👶 BROSELOW ESTIMATOR</div>
+    <div class="sec-sub">Length-based pediatric dosing reference</div>
+
+    <div style="margin-bottom:16px">
+      <div class="field-label">Patient Length (cm)</div>
+      <input type="number" placeholder="e.g. 85" value="${broLengthInput}"
+        oninput="broLengthInput=this.value;const cm=parseFloat(this.value);if(!isNaN(cm)){const idx=broLengthInput?[...${JSON.stringify(BROSELOW_THRESHOLDS)}].findIndex(t=>cm<=t):-1;broSelected=idx===-1?${BROSELOW.length-1}:idx;}renderBroselow(document.getElementById('view-broselow'))"/>
+    </div>
+
+    <div class="band-strip">
+      ${BROSELOW.map((b,i)=>`
+        <div class="band${broSelected===i?" active":""}" style="background:${b.hex};opacity:${broSelected===i?1:.55}"
+          onclick="broSelected=${i};renderBroselow(document.getElementById('view-broselow'))">
+          <div class="band-color-name">${b.color}</div>
+          <div class="band-kg">${b.kg}kg</div>
+        </div>`).join("")}
+    </div>
+
+    ${b?`
+      <div style="background:${b.hex}12;border:2px solid ${b.hex}50;border-radius:12px;padding:18px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <div style="width:32px;height:32px;border-radius:7px;background:${b.hex};flex-shrink:0"></div>
+          <div>
+            <div style="font-family:'Courier New',monospace;font-weight:900;font-size:1.05rem;color:${b.hex};letter-spacing:2px">${b.color.toUpperCase()} BAND</div>
+            <div style="font-size:.72rem;color:#5a7a9a">${b.age} · ${b.kg} kg</div>
+          </div>
+        </div>
+        <div class="result-grid">
+          ${[
+            ["Est. Weight",b.kg+" kg"],
+            ["ETT Size",b.etSize],
+            ["ETT Depth",b.etDepth],
+            ["Defib (2 J/kg)",b.defib],
+            ["Epi IV/IO",b.epi],
+            ["Fluid Bolus",parseInt(b.kg.split("–")[0])*10+"–"+parseInt(b.kg.split("–")[1])*10+" mL (10 mL/kg)"]
+          ].map(([lbl,val])=>`
+            <div class="result-box" style="border-color:${b.hex}30">
+              <div class="result-label">${lbl}</div>
+              <div class="result-val" style="color:${b.hex}">${val}</div>
+            </div>`).join("")}
+        </div>
+        <div class="alert alert-warn" style="margin-top:14px;margin-bottom:0">
+          ⚠ <strong>Clinical judgment required.</strong> Broselow estimates may not be accurate for obese or premature patients. Verify actual weight when possible.
+        </div>
+      </div>`
+    :`<div class="alert alert-info">Select a color band above or enter patient length to view dosing references.</div>`}
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DRUG INTERACTION CHECKER
+// ═══════════════════════════════════════════════════════════
+let selectedDrugs=[];
+const LEVEL_META={
+  HIGH:{bg:"rgba(248,113,113,0.1)",border:"rgba(248,113,113,0.4)",color:"#f87171",label:"HIGH RISK"},
+  MOD:{bg:"rgba(251,191,36,0.1)",border:"rgba(251,191,36,0.4)",color:"#fbbf24",label:"MODERATE"},
+  LOW:{bg:"rgba(52,211,153,0.08)",border:"rgba(52,211,153,0.3)",color:"#34d399",label:"LOW"},
+  INFO:{bg:"rgba(96,165,250,0.08)",border:"rgba(96,165,250,0.3)",color:"#60a5fa",label:"INFO"}
+};
+
+function toggleChip(name){
+  if(selectedDrugs.includes(name)) selectedDrugs=selectedDrugs.filter(x=>x!==name);
+  else selectedDrugs=[...selectedDrugs,name];
+  renderDrugCheck(document.getElementById("view-drugcheck"));
+}
+
+function renderDrugCheck(el){
+  const found=INTERACTIONS.filter(ix=>ix.drugs.filter(d=>selectedDrugs.includes(d)).length>=2);
+  el.innerHTML=`
+    <div class="sec-title" style="color:#fbbf24">💊 DRUG INTERACTION CHECKER</div>
+    <div class="sec-sub">Select 2+ drugs to check interactions</div>
+
+    <div class="drug-chips">
+      ${ALL_DRUG_NAMES.map(name=>`
+        <button class="chip${selectedDrugs.includes(name)?" on":""}"
+          style="${selectedDrugs.includes(name)?"--c:#fbbf24":""}"
+          onclick="toggleChip('${name}')">${name}</button>`).join("")}
+    </div>
+
+    ${selectedDrugs.length<2?`<div class="alert alert-info">Select at least 2 drugs above to check for interactions.</div>`:""}
+
+    ${selectedDrugs.length>=2&&!found.length?`<div class="alert alert-success">✓ No known interactions found between: ${selectedDrugs.join(", ")}. Always verify with your pharmacist or Lexicomp/Micromedex.</div>`:""}
+
+    ${found.map(ix=>{
+      const m=LEVEL_META[ix.level];
+      return `<div class="ix-card" style="background:${m.bg};border-color:${m.border}">
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px">
+          <span class="ix-level" style="color:${m.color};border-color:${m.border};background:${m.bg}">${m.label}</span>
+          <span class="ix-drugs" style="color:${m.color}">${ix.drugs.join(" ↔ ")}</span>
+        </div>
+        <div class="ix-note">${ix.note}</div>
+      </div>`;
+    }).join("")}
+
+    <div class="alert alert-info" style="margin-top:8px">
+      <strong>Disclaimer:</strong> This checker covers common ED interactions for drugs in this app only. Always verify with a clinical pharmacist, Lexicomp, or Micromedex before administration.
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PRINT CARDS
+// ═══════════════════════════════════════════════════════════
+function renderPrint(el){
+  el.innerHTML=`
+    <div class="sec-title" style="color:#60a5fa">🖨 QUICK REFERENCE CARDS</div>
+    <div class="sec-sub">Print-friendly summary · Browser print → Save as PDF</div>
+
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap" class="no-print">
+      <button onclick="window.print()" style="background:#60a5fa;color:#000;padding:10px 20px;border-radius:8px;font-weight:800;font-size:.85rem;letter-spacing:1px">🖨 Print / Save PDF</button>
+      <div class="alert alert-info" style="margin:0;flex:1">In print dialog: choose "Save as PDF" for a pocket reference you can share or store offline.</div>
+    </div>
+
+    ${Object.entries(PROTOCOLS).map(([key,proto])=>`
+      <div class="print-card" style="border-color:${proto.border}">
+        <div class="print-card-header" style="border-color:${proto.border}">
+          <span style="font-size:1.6rem">${proto.icon}</span>
+          <div>
+            <div style="font-family:'Courier New',monospace;font-weight:900;font-size:1rem;color:${proto.color};letter-spacing:3px">${proto.fullName.toUpperCase()}</div>
+            <div style="font-size:.62rem;color:#4a6a8a;letter-spacing:2px">AHA 2025 · ED QUICK REFERENCE</div>
+          </div>
+        </div>
+        <div class="print-cols">
+          <div>
+            <div style="font-size:.62rem;letter-spacing:2px;color:${proto.color};margin-bottom:8px;text-transform:uppercase;font-weight:700">Protocol Steps</div>
+            ${proto.steps.map(s=>`
+              <div class="print-step">
+                <span class="print-step-n" style="color:${proto.color}">${s.n}.</span>
+                <div>
+                  <div class="print-step-title">${s.title}</div>
+                  <div class="print-step-body">${s.body.slice(0,90)}${s.body.length>90?"…":""}</div>
+                </div>
+              </div>`).join("")}
+          </div>
+          <div>
+            <div style="font-size:.62rem;letter-spacing:2px;color:${proto.color};margin-bottom:8px;text-transform:uppercase;font-weight:700">Key Drugs & Doses</div>
+            ${DRUGS[key].map(d=>`
+              <div class="mini-drug" style="border-left:3px solid ${d.color}">
+                <div>
+                  <div class="mini-drug-name" style="color:${d.color}">${d.name}</div>
+                  <div class="mini-drug-ind">${d.ind.slice(0,50)}</div>
+                </div>
+                <div class="mini-drug-dose" style="color:${d.color};white-space:nowrap">${d.dose.split("(")[0].trim()}</div>
+              </div>`).join("")}
+          </div>
+        </div>
+        <div style="margin-top:10px;border-top:1px solid ${proto.border};padding-top:8px;font-size:.6rem;color:#3a5a7a;line-height:1.7">
+          ⚠ EDUCATIONAL USE ONLY · Verify all doses with current AHA guidelines and institutional protocols before administration · AHA/AAP 2025 CPR & ECC Guidelines
+        </div>
+      </div>`).join("")}
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PWA — SERVICE WORKER + MANIFEST
+// ═══════════════════════════════════════════════════════════
+const MANIFEST={
+  name:"ED Critical Care Pro",
+  short_name:"ED Care Pro",
+  description:"Emergency Department Quick Reference — RSI, ACLS, PALS",
+  start_url:"./",
+  display:"standalone",
+  background_color:"#0b1520",
+  theme_color:"#0b1520",
+  orientation:"portrait-primary",
+  icons:[
+    {src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%230b1520'/%3E%3Ctext x='256' y='340' font-size='280' text-anchor='middle'%3E❤️%3C/text%3E%3C/svg%3E",sizes:"512x512",type:"image/svg+xml",purpose:"any maskable"}
+  ]
+};
+
+// Inject manifest as blob URL
+const manifestBlob=new Blob([JSON.stringify(MANIFEST)],{type:"application/json"});
+document.getElementById("manifest-link").href=URL.createObjectURL(manifestBlob);
+
+// Service Worker (inline as blob)
+const SW_CODE=`
+const CACHE="ed-care-pro-v1";
+const ASSETS=["/"];
+
+self.addEventListener("install",e=>{
+  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
+});
+
+self.addEventListener("activate",e=>{
+  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
+});
+
+self.addEventListener("fetch",e=>{
+  if(e.request.method!=="GET") return;
+  e.respondWith(
+    caches.match(e.request).then(cached=>{
+      const fetchPromise=fetch(e.request).then(res=>{
+        if(res&&res.status===200){
+          const clone=res.clone();
+          caches.open(CACHE).then(c=>c.put(e.request,clone));
+        }
+        return res;
+      }).catch(()=>cached);
+      return cached||fetchPromise;
+    })
+  );
+});
+`;
+
+if("serviceWorker" in navigator){
+  const swBlob=new Blob([SW_CODE],{type:"application/javascript"});
+  const swURL=URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swURL,{scope:"./"}).then(reg=>{
+    console.log("SW registered",reg.scope);
+  }).catch(err=>console.warn("SW error (may not work from file:// — use a server)",err));
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INSTALL PROMPT
+// ═══════════════════════════════════════════════════════════
+let deferredInstallPrompt=null;
+
+window.addEventListener("beforeinstallprompt",e=>{
+  e.preventDefault();
+  deferredInstallPrompt=e;
+  document.getElementById("installBtn").classList.add("visible");
+  // Show banner if not installed
+  setTimeout(()=>{
+    if(!window.matchMedia("(display-mode: standalone)").matches)
+      document.getElementById("install-banner").classList.add("show");
+  },2000);
+});
+
+function installApp(){
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then(r=>{
+      if(r.outcome==="accepted"){
+        document.getElementById("installBtn").classList.remove("visible");
+        document.getElementById("install-banner").classList.remove("show");
+      }
+      deferredInstallPrompt=null;
+    });
+  } else {
+    // iOS / fallback instructions
+    alert("📲 To install on iPhone/iPad:\n\n1. Tap the Share button (□↑) in Safari\n2. Scroll down and tap 'Add to Home Screen'\n3. Tap 'Add' — the app icon will appear on your home screen\n\nWorks offline once installed!");
+  }
+}
+
+// iOS standalone detection
+if(window.navigator.standalone){
+  document.getElementById("installBtn").classList.remove("visible");
+  document.getElementById("install-banner").classList.remove("show");
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+renderProtocols(document.getElementById("view-protocols"));
+</script>
+</body>
+</html>
